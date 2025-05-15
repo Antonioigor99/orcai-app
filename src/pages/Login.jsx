@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
@@ -7,6 +8,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -15,11 +17,21 @@ function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      alert("Login realizado com sucesso!");
-      // redirecione se quiser, ex:
-      // window.location.href = "/dashboard";
+      navigate("/dashboard");
     } catch (err) {
-      setError("Erro ao fazer login: " + err.message);
+      switch (err.code) {
+        case "auth/user-not-found":
+          setError("Usuário não encontrado.");
+          break;
+        case "auth/wrong-password":
+          setError("Senha incorreta.");
+          break;
+        case "auth/invalid-email":
+          setError("Email inválido.");
+          break;
+        default:
+          setError("Erro ao fazer login. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -33,7 +45,10 @@ function Login() {
         </h2>
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block mb-2 text-gray-700 font-medium" htmlFor="email">
+            <label
+              className="block mb-2 text-gray-700 font-medium"
+              htmlFor="email"
+            >
               Email
             </label>
             <input
@@ -47,7 +62,10 @@ function Login() {
             />
           </div>
           <div>
-            <label className="block mb-2 text-gray-700 font-medium" htmlFor="password">
+            <label
+              className="block mb-2 text-gray-700 font-medium"
+              htmlFor="password"
+            >
               Senha
             </label>
             <input
@@ -60,11 +78,7 @@ function Login() {
               disabled={loading}
             />
           </div>
-          {error && (
-            <p className="text-red-600 text-sm mt-1">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
           <button
             type="submit"
             disabled={loading}
@@ -72,9 +86,16 @@ function Login() {
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
+          <p className="text-sm text-center mt-4">
+            Ainda não tem conta?{" "}
+            <a href="/register" className="text-blue-600 hover:underline">
+              Cadastre-se
+            </a>
+          </p>
         </form>
       </div>
     </div>
   );
 }
+
 export default Login;
